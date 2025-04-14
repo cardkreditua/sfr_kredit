@@ -1,8 +1,6 @@
 import logging
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import BotCommand
-from aiogram.dispatcher.webhook import SendMessage
-from aiohttp import web
+from aiogram.utils.executor import start_webhook
 import openai
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -32,7 +30,7 @@ sheet = client.open("Заявки Кредит").sheet1
 # Команда /start
 @dp.message_handler(commands=["start"])
 async def cmd_start(message: types.Message):
-    return SendMessage(message.chat.id, "Добрий день! 👋\nЯ допоможу вам підібрати кредит. Що вас цікавить: кредит готівкою, розстрочка на товар чи кредитна картка?")
+    await message.answer("Добрий день! 👋\nЯ допоможу вам підібрати кредит. Що вас цікавить: кредит готівкою, розстрочка на товар чи кредитна картка?")
 
 # Ответ GPT
 @dp.message_handler()
@@ -49,24 +47,26 @@ async def gpt_answer(message: types.Message):
 
     reply = response['choices'][0]['message']['content']
 
-    # Сохраняем номер, если есть
     if any(char.isdigit() for char in user_input) and len(user_input) >= 10:
         sheet.append_row([message.from_user.full_name, user_input])
 
-    return SendMessage(message.chat.id, reply)
+    await message.answer(reply)
 
-# Инициализация webhook
-async def on_startup(app):
+# Webhook настройки
+async def on_startup(dp):
     await bot.set_webhook(WEBHOOK_URL)
 
-async def on_shutdown(app):
+async def on_shutdown(dp):
     await bot.delete_webhook()
-
-app = web.Application()
-app.router.add_post(WEBHOOK_PATH, dp.dispatch)
-app.on_startup.append(on_startup)
-app.on_shutdown.append(on_shutdown)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    web.run_app(app, port=10000)
+    start_webhook(
+        dispatcher=dp,
+        webhook_path=WEBHOOK_PATH,
+        on_startup=on_startup,
+        on_shutdown=on_shutdown,
+        skip_updates=True,
+        host="0.0.0.0",
+        port=10000,
+    )
