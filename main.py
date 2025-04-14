@@ -11,7 +11,7 @@ API_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GOOGLE_CREDENTIALS_JSON = os.getenv("GOOGLE_CREDENTIALS_JSON")
 WEBHOOK_HOST = os.getenv("WEBHOOK_HOST")  # Например: https://sfr-kredit.onrender.com
-WEBHOOK_PATH = f"/webhook/{API_TOKEN}"
+WEBHOOK_PATH = "/webhook"
 WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
 
 bot = Bot(token=API_TOKEN)
