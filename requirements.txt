@@ -1,0 +1,4 @@
+aiogram
+openai
+gspread
+oauth2client
