@@ -12,6 +12,11 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiohttp import web
 from google.oauth2.service_account import Credentials
 
+scopes = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
+
 # --- ENV ---
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -33,7 +38,10 @@ dp = Dispatcher(storage=MemoryStorage())
 openai.api_key = OPENAI_API_KEY
 
 # --- Google Sheets ---
-creds = Credentials.from_service_account_info(json.loads(GOOGLE_CREDENTIALS_JSON))
+creds = Credentials.from_service_account_info(
+    json.loads(GOOGLE_CREDENTIALS_JSON),
+    scopes=scopes
+)
 gs_client = gspread.authorize(creds)
 sheet = gs_client.open("Заявки Кредит").sheet1
 
