@@ -4,7 +4,7 @@ import os
 import openai
 import json
 import gspread
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher, types, F
 from aiogram.types import Message
 from aiogram.enums import ParseMode
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
@@ -46,7 +46,7 @@ gs_client = gspread.authorize(creds)
 sheet = gs_client.open("Заявки Кредит").sheet1
 
 # --- Handlers ---
-@dp.message(commands=["start"])
+@dp.message(F.text == "/start")
 async def start_cmd(message: Message):
     await message.answer("Доброго дня! 👋\nЯ допоможу вам підібрати кредит. Що вас цікавить: кредит готівкою, розстрочка чи картка?")
 
