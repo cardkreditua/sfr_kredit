@@ -8,7 +8,6 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import Message
 from aiogram.enums import ParseMode
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-from aiogram.webhook import WebhookRequestHandler
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiohttp import web
 from google.oauth2.service_account import Credentials
