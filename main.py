@@ -1,83 +1,38 @@
 import logging
 import os
-import openai
-import json
-import gspread
 from aiogram import Bot, Dispatcher, types
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.webhook.aiohttp_server import SimpleRequestHandler
-from aiohttp import web
-from google.oauth2.service_account import Credentials
+from aiogram.types import Message
+from aiogram import F
 
-# --- ENV ---
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-WEBHOOK_HOST = os.getenv("WEBHOOK_HOST")  # https://your-app.onrender.com
-WEBHOOK_PATH = "/webhook"
-WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
-PORT = int(os.getenv("PORT", 10000))
-GOOGLE_CREDENTIALS_JSON = os.getenv("GOOGLE_CREDENTIALS_JSON")
-
-# --- Logging ---
+# Настройка логов
 logging.basicConfig(level=logging.INFO)
 
-# --- Bot Setup ---
+# Токен из переменных окружения
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+
+# Инициализация бота
 bot = Bot(token=TELEGRAM_TOKEN, parse_mode=ParseMode.HTML)
 dp = Dispatcher(storage=MemoryStorage())
 
-# --- GPT ---
-openai.api_key = OPENAI_API_KEY
+# Обработчик команды /start
+@dp.message(F.text == "/start")
+async def start_cmd(message: Message):
+    await message.answer("Привіт! Я працюю 😉")
 
-# --- Google Sheets ---
-scopes = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
-]
-creds = Credentials.from_service_account_info(
-    json.loads(GOOGLE_CREDENTIALS_JSON),
-    scopes=scopes
-)
-gs_client = gspread.authorize(creds)
-sheet = gs_client.open("Заявки Кредит").sheet1
-
-# --- Handlers ---
-@dp.message(lambda message: message.text == "/start")
-async def start_cmd(message: types.Message):
-    await message.answer("Доброго дня! 👋\nЯ допоможу вам підібрати кредит. Що вас цікавить: кредит готівкою, розстрочка чи картка?")
-
+# Обработчик всех текстов
 @dp.message()
-async def handle_message(message: types.Message):
-    user_text = message.text
+async def echo(message: Message):
+    await message.answer(f"Ти написав: {message.text}")
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "Ти ввічливий українськомовний асистент, який допомагає залишити заявку на кредит. Запитай про суму, місто, строк і підведи клієнта до того, щоб він залишив номер телефону."},
-            {"role": "user", "content": user_text},
-        ]
-    )
-    reply = response["choices"][0]["message"]["content"]
+# Запуск бота через long polling
+if __name__ == "__main__":
+    import asyncio
 
-    if any(char.isdigit() for char in user_text) and len(user_text) >= 10:
-        sheet.append_row([message.from_user.full_name, user_text])
+    async def main():
+        await dp.start_polling(bot)
 
-    await message.answer(reply)
+    asyncio.run(main())
 
-# --- Web Server & Webhook ---
-async def on_startup(app):
-    await bot.set_webhook(WEBHOOK_URL)
-
-async def on_shutdown(app):
-    await bot.delete_webhook()
-
-async def create_app():
-    app = web.Application()
-    app.on_startup.append(on_startup)
-    app.on_shutdown.append(on_shutdown)
-    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
-    return app
-
-if __name__ == '__main__':
-    web.run_app(create_app(), host="0.0.0.0", port=PORT)
 
