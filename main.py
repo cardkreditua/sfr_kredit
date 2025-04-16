@@ -53,8 +53,8 @@ async def gpt_handler(message: Message):
     "5) врешті — попроси залишити ім’я та номер телефону для зв’язку. "
     "Спілкуйся дуже людяно і підтримуючи. "
     "Якщо клієнт вже залишив номер і дані — подякуй і скажи, що заявка обробляється."
-  )
-        )
+   )
+}
         reply = response.choices[0].message.content
         await message.answer(reply)
 
